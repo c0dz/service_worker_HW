@@ -10,15 +10,19 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,14 +33,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		
-    // Start Service
-    startService(Intent(this, NetworkChangeService::class.java))
+		// Start Service
+		startService(Intent(this, NetworkChangeService::class.java))
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			val channel = NotificationChannel(
@@ -47,7 +56,7 @@ class MainActivity : ComponentActivity() {
 			val notificationManager = getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
 		}
-    
+		
 		// Work Request
 		val loggerWorkRequest =
 			OneTimeWorkRequestBuilder<LogWorker>()
@@ -60,8 +69,28 @@ class MainActivity : ComponentActivity() {
 				ExistingWorkPolicy.REPLACE,
 				loggerWorkRequest
 			)
+		
+		val viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+			override fun <T : ViewModel> create(modelClass: Class<T>): T {
+				return LogViewModel(applicationContext) as T
+			}
+		})[LogViewModel::class.java]
 		setContent {
-			ConnectionStatus()
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(5.dp),
+				verticalArrangement = Arrangement.Top,
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				ConnectionStatus()
+				Divider(
+					modifier = Modifier
+						.height(3.dp),
+					color = Color.Black
+				)
+				Logs(viewModel)
+			}
 		}
 	}
 }
@@ -105,5 +134,24 @@ fun ConnectionStatus() {
 			fontWeight = FontWeight.SemiBold, fontSize = 25.sp,
 			color = if (isConnected.value) Color.Green else Color.Red
 		)
+	}
+}
+
+@Composable
+fun Logs(viewModel: LogViewModel) {
+	val logLines by viewModel.logLines.collectAsState(initial = listOf())
+	
+	LazyColumn(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(5.dp)
+	) {
+		items(logLines.size) { index ->
+			Text(
+				text = logLines.reversed()[index],
+				fontSize = 12.sp,
+				fontWeight = FontWeight.Normal
+			)
+		}
 	}
 }

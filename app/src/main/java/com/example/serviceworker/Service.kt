@@ -11,7 +11,6 @@ import android.net.Network
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import org.json.JSONObject
 
 class NetworkChangeService : Service() {
 	private val networkChangeReceiver = NetworkChangeReceiver()
@@ -58,10 +57,14 @@ class NetworkChangeService : Service() {
 				ConnectivityManager.NetworkCallback() {
 				override fun onAvailable(network: Network) {
 					// Network is available
-					val internetAccess = mapOf(
-						"Status" to "Connected",
+					val internetStatus = "\"Status\": \"ON\""
+					Log.i("InternetService", internetStatus)
+					// save to file
+					saveLog(
+						context = context,
+						tag = "InternetService",
+						msg = internetStatus
 					)
-					Log.i("InternetService", JSONObject(internetAccess).toString())
 					
 					val isConnected = true
 					updateNotification(isConnected)
@@ -70,10 +73,14 @@ class NetworkChangeService : Service() {
 				
 				override fun onLost(network: Network) {
 					// Network is lost
-					val internetAccess = mapOf(
-						"Status" to "Not Connected",
+					val internetStatus = "\"Status\": \"OFF\""
+					Log.i("InternetService", internetStatus)
+					// save to file
+					saveLog(
+						context = context,
+						tag = "InternetService",
+						msg = internetStatus
 					)
-					Log.i("InternetService", JSONObject(internetAccess).toString())
 					
 					val isConnected = false
 					updateNotification(isConnected)

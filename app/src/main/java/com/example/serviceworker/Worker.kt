@@ -20,9 +20,23 @@ class LogWorker(appContext: Context, params: WorkerParameters) :
 		val bluetoothEnabled = isBluetoothEnabled(applicationContext)
 		val airplaneModeStatus = isAirplaneModeOn()
 		
-		Log.i("worker_airplane", "Status: ${if (airplaneModeStatus) "On" else "Off"}")
-		Log.i("worker_bluetooth", "Status: ${if (bluetoothEnabled) "On" else "Off"}")
+		val airPlaneStatus = "\"Status\": ${if (airplaneModeStatus) "On" else "Off"}"
+		val bluetoothStatus = "\"Status\": ${if (bluetoothEnabled) "On" else "Off"}"
 		
+		Log.i("worker_airplane", airPlaneStatus)
+		Log.i("worker_bluetooth", bluetoothStatus)
+		
+		// Save Logs
+		saveLog(
+			context = applicationContext,
+			tag = "worker_airplane",
+			msg = airPlaneStatus
+		)
+		saveLog(
+			context = applicationContext,
+			tag = "worker_bluetooth",
+			msg = bluetoothStatus
+		)
 		
 		// Work Request
 		val loggerWorkRequest =
