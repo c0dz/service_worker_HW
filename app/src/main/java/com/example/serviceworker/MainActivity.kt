@@ -10,6 +10,9 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,11 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 
+
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		
-		startService(Intent(this, NetworkChangeService::class.java))
+    // Start Service
+    startService(Intent(this, NetworkChangeService::class.java))
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			val channel = NotificationChannel(
@@ -42,6 +47,19 @@ class MainActivity : ComponentActivity() {
 			val notificationManager = getSystemService(NotificationManager::class.java)
 			notificationManager.createNotificationChannel(channel)
 		}
+    
+		// Work Request
+		val loggerWorkRequest =
+			OneTimeWorkRequestBuilder<LogWorker>()
+				.build()
+		
+		WorkManager
+			.getInstance(applicationContext)
+			.enqueueUniqueWork(
+				"loggerWorkRequest",
+				ExistingWorkPolicy.REPLACE,
+				loggerWorkRequest
+			)
 		setContent {
 			ConnectionStatus()
 		}
